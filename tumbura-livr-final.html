@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body{margin:0;background:transparent;font-family:'Segoe UI',Arial;font-weight:800}
+.card{background:linear-gradient(90deg,#0a1931,#123456);color:white;width:900px;padding:20px 25px;border-radius:18px;border-left:8px solid #ffcc00;box-shadow:0 0 25px black}
+.live{background:#ff0000;color:white;padding:5px 15px;border-radius:20px;font-size:16px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0.5}}
+.title{font-size:18px;color:#88ccff;margin-left:10px}
+.score{font-size:52px;color:#ffcc00;margin:12px 0}
+.info{font-size:20px;line-height:1.5}
+.time{font-size:14px;opacity:0.6;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div><span class="live">● LIVE</span><span class="title" id="mName">Connecting to CricAPI...</span></div>
+  <div class="score" id="mScore">--/--</div>
+  <div class="info" id="mInfo">Fetching...</div>
+  <div class="time" id="mTime"></div>
+</div>
+
+<script>
+const API_KEY = "a77d0d4b-731b-4803-a900-ccb18ccf939d";
+const URL = `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`;
+
+async function loadScore(){
+  try{
+    const res = await fetch(URL);
+    const json = await res.json();
+    
+    if(!json.data || json.data.length === 0){
+      document.getElementById('mScore').innerText = "No Matches Today";
+      return;
+    }
+
+    // Live match ni first teesukuntundi
+    let match = json.data.find(m => m.matchStarted && !m.matchEnded) || json.data[0];
+    
+    document.getElementById('mName').innerText = match.name + " | " + match.venue;
+    
+    let scoreText = "";
+    if(match.score && match.score.length > 0){
+      scoreText = match.score.map(s => `${s.inning} ${s.r}/${s.w} (${s.o} ov)`).join('  |  ');
+    } else {
+      scoreText = match.status;
+    }
+    
+    document.getElementById('mScore').innerText = scoreText;
+    document.getElementById('mInfo').innerHTML = `📢 ${match.status}<br>🏟️ ${match.venue} | ${match.matchType.toUpperCase()} | ${match.date}`;
+    document.getElementById('mTime').innerText = "Last Updated: " + new Date().toLocaleTimeString() + " | Auto-refresh 15s | Powered by CricAPI.com";
+
+  } catch(err){
+    document.getElementById('mScore').innerText = "Error Loading";
+    document.getElementById('mInfo').innerText = "Check Internet / API Key. Error: " + err;
+  }
+}
+
+loadScore();
+setInterval(loadScore, 15000);
+</script>
+</body>
+</html>
